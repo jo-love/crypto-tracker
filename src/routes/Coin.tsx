@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import {
   Switch,
   Route,
@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { fetchCoinInfo, fetchCoinTickers } from '../api';
 import Chart from './Chart';
 import Price from './Price';
 
@@ -137,33 +138,45 @@ interface IPriceData {
 // 데이터 fetch하면서 타입입력 할 때, console 도구창에서 오른쪽 버튼 누르고, store object as global object 클릭 -> key: Object.keys(temp1).join() value: 명령어 입력하면 쉽게 타입 키 값 복사해 줄 수 있다. Object.values(temp1).map((v) => typeof(v)).join()
 
 const Coin = () => {
-  const [loading, setLoading] = useState(true);
   const { coinId } = useParams<{ coinId: string }>();
   const { state } = useLocation<RouteState>();
-  const [info, setInfo] = useState<IInfoData>();
-  const [priceInfo, setPriceInfo] = useState<IPriceData>();
+  // const [loading, setLoading] = useState(true);
+  // const [infoData, setInfo] = useState<IInfoData>();
+  // const [priceInfo, setPriceInfo] = useState<IPriceData>();
   //match에게 현재 coindId/price url에 있는지 확인할 수 있다
   const priceMatch = useRouteMatch('/:coinId/price');
   const chartMatch = useRouteMatch('/:coinId/chart');
 
-  useEffect(() => {
-    (async () => {
-      const infoData = await (
-        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
-      ).json();
-      const priceData = await (
-        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
-      ).json();
-      setInfo(infoData);
-      setPriceInfo(priceData);
-      setLoading(false);
-    })();
-  }, [coinId]);
+  // queryKey는 고유한 값을 가져야하는데 아래처럼 같은 이름을 사용할 경우 좋지않다.
+  // useQuery는 쿼리키를 배열로 생각하고 있기때문에 배열 안에 고유한 이름을 추가해준다.
+  const { isLoading: infoLoading, data: infoData } = useQuery<IInfoData>(
+    ['infoData', coinId],
+    () => fetchCoinInfo(coinId),
+  );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery<IPriceData>(
+    ['ticker', coinId],
+    () => fetchCoinTickers(coinId),
+  );
+
+  // useEffect(() => {
+  //   (async () => {
+  //     const infoData = await (
+  //       await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
+  //     ).json();
+  //     const priceData = await (
+  //       await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
+  //     ).json();
+  //     setInfo(infoData);
+  //     setPriceInfo(priceData);
+  //     setLoading(false);
+  //   })();
+  // }, [coinId]);
+  const loading = infoLoading || tickersLoading;
   return (
     <Container>
       <Header>
         <Title>
-          {state?.name ? state.name : loading ? 'Loading...' : info?.name}
+          {state?.name ? state.name : loading ? 'Loading...' : infoData?.name}
         </Title>
         {/* 시크릿 모드에서 홈화면이 아닌 url로 페이지에 직접 접근시, 오류가 발생한다. -> 홈화면을 통해  클릭을 해야 Location-state가 생성이 되기 때문이다.
         url을 브라우저에서 직접 접근한다면, loading중이라면 loading을 보여주고 아니라면 coin의 이름을 보여줄 것이다.  */}
@@ -175,26 +188,26 @@ const Coin = () => {
           <Overview>
             <OverviewItem>
               <span>Rank:</span>
-              <span>{info?.rank}</span>
+              <span>{infoData?.rank}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Symbol:</span>
-              <span>${info?.symbol}</span>
+              <span>${infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Open Source:</span>
-              <span>{info?.open_source ? 'Yes' : 'No'}</span>
+              <span>{infoData?.open_source ? 'Yes' : 'No'}</span>
             </OverviewItem>
           </Overview>
-          <Description>{info?.description}</Description>
+          <Description>{infoData?.description}</Description>
           <Overview>
             <OverviewItem>
               <span>Total Suply:</span>
-              <span>{priceInfo?.total_supply}</span>
+              <span>{tickersData?.total_supply}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Max Supply:</span>
-              <span>{priceInfo?.max_supply}</span>
+              <span>{tickersData?.max_supply}</span>
             </OverviewItem>
           </Overview>
           <Tabs>
