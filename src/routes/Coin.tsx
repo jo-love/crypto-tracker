@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { Helmet } from 'react-helmet';
 import { fetchCoinInfo, fetchCoinTickers } from '../api';
 import Chart from './Chart';
 import Price from './Price';
@@ -156,6 +157,10 @@ const Coin = () => {
   const { isLoading: tickersLoading, data: tickersData } = useQuery<IPriceData>(
     ['ticker', coinId],
     () => fetchCoinTickers(coinId),
+    {
+      //optional -  coinId 쿼리를 5초마다 refetch한다. 
+      refetchInterval: 5000,
+    },
   );
 
   // useEffect(() => {
@@ -174,6 +179,12 @@ const Coin = () => {
   const loading = infoLoading || tickersLoading;
   return (
     <Container>
+      <Helmet>
+        {/* helmet은 무엇을 render하던 문서의 head로 감 */}
+        <title>
+          {state?.name ? state.name : loading ? 'Loading...' : infoData?.name}
+        </title>
+      </Helmet>
       <Header>
         <Title>
           {state?.name ? state.name : loading ? 'Loading...' : infoData?.name}
@@ -195,8 +206,8 @@ const Coin = () => {
               <span>${infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
-              <span>Open Source:</span>
-              <span>{infoData?.open_source ? 'Yes' : 'No'}</span>
+              <span>Price:</span>
+              <span>${tickersData?.quotes.USD.price.toFixed(2)}</span>
             </OverviewItem>
           </Overview>
           <Description>{infoData?.description}</Description>
@@ -223,7 +234,7 @@ const Coin = () => {
               <Price />
             </Route>
             <Route path={`/${coinId}/chart`}>
-              <Chart />
+              <Chart coinId={coinId} />
             </Route>
           </Switch>
         </>
