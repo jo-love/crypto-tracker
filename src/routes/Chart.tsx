@@ -17,61 +17,68 @@ interface IHistorical {
   volume: number;
 }
 const Chart = ({ coinId }: ChartProps) => {
-  const { isLoading, data } = useQuery<IHistorical[]>(['ohlcv', coinId], () =>
-    fetchCoinHistory(coinId),
+  const { isLoading, data } = useQuery<IHistorical[]>(
+    ['ohlcv', coinId],
+    () => fetchCoinHistory(coinId),
+    {
+      refetchInterval: 10000,
+    },
   );
+
+  const xy = data?.map((item) => {
+    return {
+      x: new Date(item.time_close),
+      y: [
+        item.open.toFixed(2),
+        item.high.toFixed(2),
+        item.low.toFixed(2),
+        item.close.toFixed(2),
+      ],
+    };
+  });
+
   return (
     <div>
       {isLoading ? (
         'Loading  chart...'
       ) : (
         <ApexChart
-          type="line"
-          series={[{ name: 'Price', data: data?.map((price) => price.close) }]}
+          type="candlestick"
+          series={[
+            {
+              data: xy,
+            },
+          ]}
           options={{
+            title: {
+              text: `${coinId} Chart`,
+              align: 'left',
+            },
             theme: {
               mode: 'dark',
             },
+            plotOptions: {
+              candlestick: {
+                colors: {
+                  upward: '#0000ff',
+                  downward: '#FF0000',
+                },
+              },
+            },
             chart: {
-              height: 300,
+              type: 'candlestick',
               width: 500,
+              height: 300,
               toolbar: {
                 show: false,
               },
               background: 'transparent',
             },
-
-            grid: {
-              show: false,
-            },
-            stroke: {
-              curve: 'smooth',
-              width: 4,
-            },
             xaxis: {
-              axisBorder: { show: false },
-              axisTicks: { show: false },
-              labels: {
-                show: false,
-              },
-              categories: data?.map((price) => price.time_close),
               type: 'datetime',
             },
             yaxis: {
               show: false,
-            },
-            fill: {
-              type: 'gradient',
-              gradient: {
-                gradientToColors: ['blue'],
-                stops: [0, 100],
-              },
-            },
-            colors: ['white'],
-            tooltip: {
-              y: {
-                formatter: (value) => `${value.toFixed(2)}`,
-              },
             },
           }}
         />

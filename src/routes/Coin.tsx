@@ -5,6 +5,7 @@ import {
   useLocation,
   useParams,
   useRouteMatch,
+  useHistory,
 } from 'react-router';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
@@ -30,7 +31,7 @@ const Header = styled.header`
   justify-content: center;
   align-items: center;
 `;
-const Overview = styled.div`
+export const Overview = styled.div`
   display: flex;
   justify-content: space-between;
   background-color: rgba(0, 0, 0, 0.5);
@@ -53,6 +54,7 @@ const Description = styled.p`
 `;
 
 const Tabs = styled.div`
+  height: 35px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   margin: 25px 0px;
@@ -62,7 +64,7 @@ const Tabs = styled.div`
 const Tab = styled.span<{ isActive: boolean }>`
   text-align: center;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 400;
   background-color: rgba(0, 0, 0, 0.5);
   padding: 7px 0px;
@@ -73,7 +75,15 @@ const Tab = styled.span<{ isActive: boolean }>`
     display: block;
   }
 `;
-
+const Home = styled.div`
+  text-align: right;
+  margin-bottom: 10px;
+  cursor: pointer;
+  img {
+    width: 30px;
+    height: 30px;
+  }
+`;
 interface RouteState {
   name: string;
 }
@@ -103,7 +113,7 @@ interface IInfoData {
   last_data_at: string;
 }
 
-interface IPriceData {
+export interface IPriceData {
   id: string;
   name: string;
   symbol: string;
@@ -121,18 +131,13 @@ interface IPriceData {
       market_cap: number;
       market_cap_change_24h: number;
       percent_change_1h: number;
-      percent_change_1y: number;
-      percent_change_6h: number;
       percent_change_7d: number;
       percent_change_12h: number;
       percent_change_15m: number;
       percent_change_24h: number;
       percent_change_30d: number;
-      percent_change_30m: number;
       percent_from_price_ath: number;
       price: number;
-      volume_24h: number;
-      volume_24h_change_24h: number;
     };
   };
 }
@@ -147,7 +152,7 @@ const Coin = () => {
   //match에게 현재 coindId/price url에 있는지 확인할 수 있다
   const priceMatch = useRouteMatch('/:coinId/price');
   const chartMatch = useRouteMatch('/:coinId/chart');
-
+  const history = useHistory();
   // queryKey는 고유한 값을 가져야하는데 아래처럼 같은 이름을 사용할 경우 좋지않다.
   // useQuery는 쿼리키를 배열로 생각하고 있기때문에 배열 안에 고유한 이름을 추가해준다.
   const { isLoading: infoLoading, data: infoData } = useQuery<IInfoData>(
@@ -158,11 +163,10 @@ const Coin = () => {
     ['ticker', coinId],
     () => fetchCoinTickers(coinId),
     {
-      //optional -  coinId 쿼리를 5초마다 refetch한다. 
+      //optional -  coinId 쿼리를 5초마다 refetch한다.
       refetchInterval: 5000,
     },
   );
-
   // useEffect(() => {
   //   (async () => {
   //     const infoData = await (
@@ -192,6 +196,15 @@ const Coin = () => {
         {/* 시크릿 모드에서 홈화면이 아닌 url로 페이지에 직접 접근시, 오류가 발생한다. -> 홈화면을 통해  클릭을 해야 Location-state가 생성이 되기 때문이다.
         url을 브라우저에서 직접 접근한다면, loading중이라면 loading을 보여주고 아니라면 coin의 이름을 보여줄 것이다.  */}
       </Header>
+      <Home>
+        <img
+          onClick={() => {
+            history.push('/');
+          }}
+          src="/home.png"
+          alt="home"
+        />
+      </Home>
       {loading ? (
         <div>Loading...</div>
       ) : (
@@ -199,7 +212,7 @@ const Coin = () => {
           <Overview>
             <OverviewItem>
               <span>Rank:</span>
-              <span>{infoData?.rank}</span>
+              <span> {infoData?.rank}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Symbol:</span>
@@ -207,7 +220,7 @@ const Coin = () => {
             </OverviewItem>
             <OverviewItem>
               <span>Price:</span>
-              <span>${tickersData?.quotes.USD.price.toFixed(2)}</span>
+              <span>${tickersData?.quotes.USD.price?.toFixed(2)}</span>
             </OverviewItem>
           </Overview>
           <Description>{infoData?.description}</Description>
@@ -231,7 +244,7 @@ const Coin = () => {
           </Tabs>
           <Switch>
             <Route path={`/${coinId}/price`}>
-              <Price />
+              <Price isLoading={tickersLoading} data={tickersData} />
             </Route>
             <Route path={`/${coinId}/chart`}>
               <Chart coinId={coinId} />
