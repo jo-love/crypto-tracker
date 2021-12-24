@@ -1,6 +1,8 @@
 import { useQuery } from 'react-query';
 import ApexChart from 'react-apexcharts';
 import { fetchCoinHistory } from '../api';
+import { useRecoilValue } from 'recoil';
+import { isDarkAtom } from '../atoms';
 
 interface ChartProps {
   coinId: string;
@@ -24,6 +26,7 @@ const Chart = ({ coinId }: ChartProps) => {
       refetchInterval: 10000,
     },
   );
+  const isDark = useRecoilValue(isDarkAtom);
 
   const xy = data?.map((item) => {
     return {
@@ -55,7 +58,7 @@ const Chart = ({ coinId }: ChartProps) => {
               align: 'left',
             },
             theme: {
-              mode: 'dark',
+              mode: isDark ? 'dark' : 'light',
             },
             plotOptions: {
               candlestick: {

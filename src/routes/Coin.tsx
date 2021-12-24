@@ -158,15 +158,15 @@ const Coin = () => {
   const { isLoading: infoLoading, data: infoData } = useQuery<IInfoData>(
     ['infoData', coinId],
     () => fetchCoinInfo(coinId),
-  );
-  const { isLoading: tickersLoading, data: tickersData } = useQuery<IPriceData>(
-    ['ticker', coinId],
-    () => fetchCoinTickers(coinId),
     {
-      //optional -  coinId 쿼리를 5초마다 refetch한다.
       refetchInterval: 5000,
     },
   );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery<IPriceData>(
+    ['tickers', coinId],
+    () => fetchCoinTickers(coinId),
+  );
+
   // useEffect(() => {
   //   (async () => {
   //     const infoData = await (
@@ -220,7 +220,7 @@ const Coin = () => {
             </OverviewItem>
             <OverviewItem>
               <span>Price:</span>
-              <span>${tickersData?.quotes.USD.price?.toFixed(2)}</span>
+              <span>${tickersData?.quotes?.USD?.price?.toFixed(2)}</span>
             </OverviewItem>
           </Overview>
           <Description>{infoData?.description}</Description>
@@ -243,10 +243,10 @@ const Coin = () => {
             </Tab>
           </Tabs>
           <Switch>
-            <Route path={`/${coinId}/price`}>
-              <Price isLoading={tickersLoading} data={tickersData} />
+            <Route path={`/:coinId/price`}>
+              <Price tickersData={tickersData} />
             </Route>
-            <Route path={`/${coinId}/chart`}>
+            <Route path={`/:coinId/chart`}>
               <Chart coinId={coinId} />
             </Route>
           </Switch>
